@@ -1,8 +1,8 @@
 <template>
   <a-layout>
-    <div class="login">
+    <div class="layout layout-insecure">
       <a-card>
-        <h1>Register</h1>
+        <h1 class="title">Register</h1>
         <a-divider />
         <a-form-model :label-col="{ span: 10 }" :wrapper-col="{ span: 14 }">
           <a-form-model-item label="Name">

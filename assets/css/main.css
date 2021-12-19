@@ -1,0 +1,18 @@
+.layout {
+  min-height: 100vh;
+}
+.layout-insecure {
+  display: grid;
+  grid-template-columns: 30rem;
+  grid-template-rows: auto;
+  justify-content: center;
+  align-content: center;
+}
+.title {
+  font-weight: bolder;
+  font-style: italic;
+  font-size: 1rem;
+}
+.mb-1 {
+  margin-bottom: 1rem;
+}

@@ -1,80 +1,131 @@
 <template>
-  <a-layout id="layout">
-    <a-layout-header class="header">
-      <div class="logo">
-        <span> Glacier segmentation </span>
-      </div>
-    </a-layout-header>
-    <a-layout>
-      <a-layout-sider width="200" style="background: #fff">
-        <a-menu
-          mode="inline"
-          :default-selected-keys="['1']"
-          :default-open-keys="['sub1']"
-          :style="{ height: '100%', borderRight: 0 }"
-        >
-          <a-sub-menu key="sub1">
-            <span slot="title"><a-icon type="user" />subnav 1</span>
-            <a-menu-item key="1"> option1 </a-menu-item>
-            <a-menu-item key="2"> option2 </a-menu-item>
-            <a-menu-item key="3"> option3 </a-menu-item>
-            <a-menu-item key="4"> option4 </a-menu-item>
-          </a-sub-menu>
-          <a-sub-menu key="sub2">
-            <span slot="title"><a-icon type="laptop" />subnav 2</span>
-            <a-menu-item key="5"> option5 </a-menu-item>
-            <a-menu-item key="6"> option6 </a-menu-item>
-            <a-menu-item key="7"> option7 </a-menu-item>
-            <a-menu-item key="8"> option8 </a-menu-item>
-          </a-sub-menu>
-          <a-sub-menu key="sub3">
-            <span slot="title"><a-icon type="notification" />subnav 3</span>
-            <a-menu-item key="9"> option9 </a-menu-item>
-            <a-menu-item key="10"> option10 </a-menu-item>
-            <a-menu-item key="11"> option11 </a-menu-item>
-            <a-menu-item key="12"> option12 </a-menu-item>
-          </a-sub-menu>
-        </a-menu>
-      </a-layout-sider>
-      <a-layout style="padding: 0 24px 24px">
-        <a-breadcrumb style="margin: 16px 0">
-          <a-breadcrumb-item>Home</a-breadcrumb-item>
-          <a-breadcrumb-item>List</a-breadcrumb-item>
-          <a-breadcrumb-item>App</a-breadcrumb-item>
-        </a-breadcrumb>
-        <a-layout-content
-          :style="{
-            background: '#fff',
-            padding: '24px',
-            margin: 0,
-            minHeight: '280px'
-          }"
-        >
-          Content
-        </a-layout-content>
-      </a-layout>
-    </a-layout>
-  </a-layout>
+  <Page :title="'My projects'">
+    <section>
+      <a-button type="primary" class="mb-1" @click="openProjectForm">
+        Add project
+      </a-button>
+      <a-list
+        item-layout="horizontal"
+        :grid="{ gutter: 16, xs: 1, sm: 2, md: 4, lg: 4, xl: 6, xxl: 3 }"
+        :data-source="projects"
+      >
+        <a-list-item slot="renderItem" slot-scope="item">
+          <a-card :title="item.name">
+            {{ item.description }}
+          </a-card>
+        </a-list-item>
+      </a-list>
+    </section>
+    <a-drawer
+      :visible="isProjectFormVisible"
+      @close="isProjectFormVisible = false"
+    >
+      <h1 class="title">Add project</h1>
+      <a-form-model
+        ref="ruleForm"
+        :model="form"
+        :rules="rules"
+        @submit.prevent="submit"
+      >
+        <a-form-model-item prop="name" label="Name">
+          <a-input
+            v-model="form.name"
+            type="text"
+            placeholder="Enter project name"
+          />
+        </a-form-model-item>
+        <a-form-model-item prop="description" label="Description">
+          <a-input
+            v-model="form.description"
+            type="textarea"
+            placeholder="Enter project description"
+          />
+        </a-form-model-item>
+        <a-form-model-item>
+          <a-button
+            block
+            type="primary"
+            html-type="submit"
+            :loading="isLoading"
+          >
+            Save
+          </a-button>
+        </a-form-model-item>
+      </a-form-model>
+    </a-drawer>
+  </Page>
 </template>
+
 <script>
+import { mapState, mapActions } from 'vuex'
+import Page from '~/components/Page.vue'
 export default {
+  components: { Page },
+  layout: 'admin',
   data() {
     return {
-      collapsed: false
+      isLoading: false,
+      form: {
+        name: '',
+        description: ''
+      },
+      rules: {
+        name: [
+          {
+            required: true,
+            message: 'Please enter project name'
+          }
+        ],
+        description: [
+          {
+            required: true,
+            message: 'Please enter project description'
+          }
+        ]
+      },
+      isProjectFormVisible: false
     }
+  },
+  async fetch() {
+    try {
+      await this.fetchProjects()
+    } catch (error) {
+      this.$message.error(error)
+    }
+  },
+  computed: {
+    ...mapState(['projects'])
+  },
+  methods: {
+    ...mapActions(['fetchProjects', 'addProject']),
+    reset() {
+      this.form = {
+        name: '',
+        description: ''
+      }
+      this.$refs.ruleForm.resetFields()
+    },
+    openProjectForm() {
+      this.isProjectFormVisible = true
+    },
+    submit() {
+      this.$refs.ruleForm.validate(async (isValid) => {
+        if (isValid) {
+          try {
+            this.isLoading = true
+            await this.addProject(this.form)
+            this.isProjectFormVisible = false
+            this.reset()
+            this.$message.success('Project added successfully')
+          } catch (error) {
+            this.$message.error(error.message)
+          } finally {
+            this.isLoading = false
+          }
+        }
+      })
+    },
+    removeProject() {}
   }
 }
 </script>
-
-<style scoped>
-#layout {
-  min-height: 100vh;
-}
-
-#layout .logo {
-  color: white;
-  font-weight: bolder;
-  font-style: italic;
-  font-size: 1rem;
-}
-</style>
