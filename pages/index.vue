@@ -1,5 +1,5 @@
 <template>
-  <Page :title="'My projects'">
+  <Page title="My projects">
     <section>
       <a-button type="primary" class="mb-1" @click="openProjectForm">
         Add project
@@ -11,7 +11,13 @@
       >
         <a-list-item slot="renderItem" slot-scope="item">
           <a-card :title="item.name">
-            {{ item.description }}
+            <p>{{ item.description }}</p>
+            <a-space>
+              <a-button type="primary" @click="$router.push(`/${item.id}/map`)">
+                Open
+              </a-button>
+              <a-button type="danger" ghost> Delete </a-button>
+            </a-space>
           </a-card>
         </a-list-item>
       </a-list>
