@@ -5,9 +5,10 @@
         <a-tab-pane key="0" tab="Locations">
           <MapCard title="Search locations">
             <a-input-search
+              v-model="locationSearchQuery"
               class="mb-1"
               placeholder="Enter a location"
-              @search="seachLocation"
+              @search="searchLocation"
             />
             <a-list :data-source="locationSearchResults">
               <a-list-item slot="renderItem" key="item.id" slot-scope="item">
@@ -19,7 +20,7 @@
               <a-button
                 v-if="locationSearchResults.length > 0"
                 type="danger"
-                @click="locationSearchResults = []"
+                @click="clearSearchLocationResults"
               >
                 <a-icon type="delete" />
                 <span>Clear results</span>
@@ -30,26 +31,35 @@
         <a-tab-pane key="1" tab="Products">
           <MapCard title="Search products">
             <a-form-model
-              ref="ruleSearchForm"
-              :model="searchForm"
-              :rules="rulesSearchForm"
-              @submit.prevent="submitSearchForm"
+              ref="ruleSearchProductForm"
+              :model="searchProductForm"
+              :rules="rulesSearchProductForm"
+              @submit.prevent="searchProducts"
             >
               <a-form-model-item prop="dateRange" label="Select a date range">
-                <a-range-picker v-model="searchForm.dateRange" class="mb-1" />
+                <a-range-picker
+                  v-model="searchProductForm.dateRange"
+                  class="mb-1"
+                />
               </a-form-model-item>
               <a-form-model-item
                 prop="cloudCoverage"
                 label="Select a cloud coverage"
               >
                 <a-slider
-                  v-model="searchForm.cloudCoverage"
+                  v-model="searchProductForm.cloudCoverage"
                   range
                   :default-value="[0, 100]"
                 />
               </a-form-model-item>
               <a-form-model-item>
-                <a-button type="primary" html-type="submit">Search</a-button>
+                <a-button
+                  type="primary"
+                  html-type="submit"
+                  :loading="searchProductFormIsLoading"
+                >
+                  Search
+                </a-button>
               </a-form-model-item>
             </a-form-model>
           </MapCard>
@@ -59,6 +69,7 @@
             <a-button
               block
               type="primary"
+              :loading="searchProductFormIsLoading"
               @click="isProgramSegmentationDrawerVisible = true"
             >
               Program segmentation
@@ -82,17 +93,17 @@
       </a-form-model>
     </a-drawer>
     <a-drawer
-      width="520"
+      width="500"
       placement="left"
       title="Search results"
       :visible="isSearchResultsDrawerVisible"
       @close="isSearchResultsDrawerVisible = false"
     >
-      <a-list item-layout="vertical" :data-source="productResults">
+      <a-list item-layout="vertical" :data-source="products">
         <a-list-item slot="renderItem" key="item.id" slot-scope="item">
           <h1 class="subtitle-result">{{ item.title }}</h1>
           <p>
-            {{ item.description }}
+            {{ item.summary }}, Cloud coverage: {{ item.cloudcoverpercentage }}%
           </p>
         </a-list-item>
       </a-list>
@@ -103,6 +114,7 @@
 <script>
 import L from 'leaflet'
 import axios from 'axios'
+import { mapActions, mapState } from 'vuex'
 import Subtitle from '~/components/Subtitle.vue'
 import MapCard from '~/components/MapCard.vue'
 import 'leaflet/dist/leaflet.css'
@@ -117,11 +129,16 @@ export default {
       map: null,
       isProgramSegmentationDrawerVisible: false,
       isSearchResultsDrawerVisible: false,
-      searchForm: {
+      // Search locations
+      locationSearchQuery: '',
+      locationSearchResults: [],
+      // Search products
+      searchProductFormIsLoading: false,
+      searchProductForm: {
         dateRange: [],
         cloudCoverage: []
       },
-      rulesSearchForm: {
+      rulesSearchProductForm: {
         dateRange: [
           {
             required: true,
@@ -134,31 +151,19 @@ export default {
             message: 'Please enter cloud coverage'
           }
         ]
-      },
-      productResults: [
-        {
-          id: 1,
-          title: 'Ant Design Title 1',
-          description:
-            'Ant Design, a design language for background applications, is refined by Ant UED Team.'
-        },
-        {
-          id: 2,
-          title: 'Ant Design Title 2',
-          description:
-            'Ant Design, a design language for background applications, is refined by Ant UED Team.'
-        }
-      ],
-      locationSearchResults: []
+      }
     }
+  },
+  computed: {
+    ...mapState(['products'])
   },
   mounted() {
     this.initMap()
   },
   methods: {
+    ...mapActions(['fetchProducts']),
     initMap() {
       this.map = L.map('map').setView([-9.3098601, -75.4851312], 5)
-
       var baseLayer = L.tileLayer(
         'https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw',
         {
@@ -171,14 +176,10 @@ export default {
           zoomOffset: -1
         }
       )
-
       this.map.addLayer(baseLayer)
     },
-    submitSearchForm() {
-      console.log(this.searchForm)
-      this.isSearchResultsDrawerVisible = true
-    },
-    async seachLocation(value) {
+    // Search locations
+    async searchLocation(value) {
       try {
         const { data } = await axios.get(
           `https://api.mapbox.com/geocoding/v5/mapbox.places/${value}.json?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw&language=es`
@@ -194,8 +195,41 @@ export default {
         this.$message.error(error.message)
       }
     },
+    clearSearchLocationResults() {
+      this.locationSearchQuery = ''
+      this.locationSearchResults = []
+    },
     zoomToLocation(center) {
       this.map.setView(center, 13)
+    },
+    // Search products
+    async searchProducts() {
+      this.$refs.ruleSearchProductForm.validate(async (isValid) => {
+        if (isValid) {
+          try {
+            this.searchProductFormIsLoading = true
+
+            // Get polygon from window
+            const mapBounds = this.map.getBounds()
+            const polygon = L.rectangle(mapBounds)
+            const polygonGeoJson = polygon.toGeoJSON()
+
+            await this.fetchProducts({
+              geojsonToSearch: JSON.stringify(polygonGeoJson),
+              initialDate: '20211020',
+              finalDate: '20211022',
+              initialCloudCoverage: 0,
+              finalCloudCoverage: 100
+            })
+            this.$message.success('Product search successfully')
+            this.isSearchResultsDrawerVisible = true
+          } catch (error) {
+            this.$message.error(error.message)
+          } finally {
+            this.searchProductFormIsLoading = false
+          }
+        }
+      })
     }
   }
 }
@@ -213,7 +247,7 @@ export default {
   height: calc(100vh - 64px);
 }
 .subtitle-result {
-  font-size: 1rem;
+  font-size: 0.8rem;
   font-style: italic;
 }
 .result-link {

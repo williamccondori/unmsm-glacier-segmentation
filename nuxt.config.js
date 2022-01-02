@@ -32,12 +32,45 @@ export default {
   // Modules: https://go.nuxtjs.dev/config-modules
   modules: [
     // https://go.nuxtjs.dev/axios
-    '@nuxtjs/axios'
+    '@nuxtjs/axios',
+    '@nuxtjs/auth-next'
   ],
 
   // Axios module configuration: https://go.nuxtjs.dev/config-axios
-  axios: {},
+  axios: { baseURL: 'http://localhost:8000/api' },
 
   // Build Configuration: https://go.nuxtjs.dev/config-build
-  build: {}
+  build: {},
+
+  router: {
+    middleware: ['auth']
+  },
+
+  // Refresh token from DRF
+  auth: {
+    strategies: {
+      local: {
+        schema: 'refresh',
+        token: {
+          property: 'access',
+          maxAge: 1800,
+          global: true
+        },
+        refreshToken: {
+          property: 'refresh',
+          data: 'refresh',
+          maxAge: 60 * 60 * 24 * 30
+        },
+        user: {
+          property: 'user'
+        },
+        endpoints: {
+          login: { url: '/auth/login/', method: 'post' },
+          refresh: { url: '/auth/refresh/', method: 'post' },
+          user: { url: '/auth/user/', method: 'get' },
+          logout: { url: '/auth/logout/', method: 'post' }
+        }
+      }
+    }
+  }
 }

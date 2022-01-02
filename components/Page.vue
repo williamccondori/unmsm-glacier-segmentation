@@ -6,7 +6,7 @@
       </a-breadcrumb-item>
     </a-breadcrumb>
     <a-layout-content class="layout__content">
-      <a-page-header :title="title" class="mb-1" />
+      <h1>{{ title }}</h1>
       <slot />
     </a-layout-content>
   </a-layout>
@@ -34,5 +34,10 @@ export default {
   margin: 0;
   padding: 1rem;
   background: white;
+}
+.layout__content h1 {
+  font-weight: 400;
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
 }
 </style>

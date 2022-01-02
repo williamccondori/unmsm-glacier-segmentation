@@ -11,6 +11,7 @@
     "lint:fix": "eslint --fix --ext .js,.vue ."
   },
   "dependencies": {
+    "@nuxtjs/auth-next": "5.0.0-1640716105.da0587d",
     "@nuxtjs/axios": "^5.13.6",
     "ant-design-vue": "^1.7.6",
     "core-js": "^3.15.1",

@@ -1,7 +1,9 @@
 <template>
   <a-layout class="layout">
     <a-layout-header class="header">
-      <h1 class="title header__title">Glacier segmentation</h1>
+      <a class="title header__title" @click="$router.push('/')">
+        Glacier segmentation
+      </a>
     </a-layout-header>
     <a-layout>
       <a-layout-sider width="200" style="background: #fff">
@@ -11,8 +13,10 @@
           :default-open-keys="['home']"
           :style="{ height: '100%', borderRight: 0 }"
         >
-          <a-menu-item key="1"> <a-icon type="home" /> Home </a-menu-item>
-          <a-menu-item key="3">
+          <a-menu-item key="1" @click="$router.push('/')">
+            <a-icon type="home" /> Home
+          </a-menu-item>
+          <a-menu-item key="2" @click="$router.push('/settings')">
             <a-icon type="setting" /> Settings
           </a-menu-item>
         </a-menu>

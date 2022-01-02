@@ -1,7 +1,9 @@
 <template>
   <a-layout class="layout">
     <a-layout-header class="header">
-      <h1 class="title header__title">Glacier segmentation</h1>
+      <a class="title header__title" @click="$router.push('/')">
+        Glacier segmentation
+      </a>
     </a-layout-header>
     <nuxt />
   </a-layout>

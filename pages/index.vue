@@ -1,12 +1,13 @@
 <template>
   <Page title="My projects">
+    <Subtitle label="All projects" />
     <section>
       <a-button type="primary" class="mb-1" @click="openProjectForm">
         Add project
       </a-button>
       <a-list
         item-layout="horizontal"
-        :grid="{ gutter: 16, xs: 1, sm: 2, md: 4, lg: 4, xl: 6, xxl: 3 }"
+        :grid="{ gutter: 16, xs: 1, sm: 4 }"
         :data-source="projects"
       >
         <a-list-item slot="renderItem" slot-scope="item">
